@@ -9,9 +9,12 @@ public class NodeConnector : MonoBehaviour
     public List<Transform> allNodes;
     private List<Transform> playerSequence = new List<Transform>();
     private List<Vector3> points = new List<Vector3>();
+    private List<LineSegment> previousSegments = new List<LineSegment>();
     private bool isDrawing = false;
 
     public float offsetDistance = 0.5f;
+
+    private const float DistanceThreshold = 0.001f;
 
     void Start()
     {
@@ -63,6 +66,7 @@ public class NodeConnector : MonoBehaviour
         isDrawing = true;
         playerSequence.Clear();
         points.Clear();
+        previousSegments.Clear();
         lineRenderer.positionCount = 0;
 
         AddPoint(node, hit);
@@ -71,7 +75,6 @@ public class NodeConnector : MonoBehaviour
     void UpdateLineToMousePosition()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Vector3 mousePos = GetOffsetPosition(hit.point, hit.normal);
@@ -80,17 +83,32 @@ public class NodeConnector : MonoBehaviour
             {
                 lineRenderer.SetPosition(lineRenderer.positionCount - 1, mousePos);
             }
-            else
-            {
-                AddPoint(hit.transform, hit);
-            }
         }
     }
 
     void AddPoint(Transform node, RaycastHit hit)
     {
-        playerSequence.Add(node);
         Vector3 offsetPos = GetOffsetPosition(node.position, hit.normal);
+        Vector3 newSegmentStart = points.Count > 0 ? points[points.Count - 1] : offsetPos;
+        Vector3 newSegmentEnd = offsetPos;
+
+        //Debug.Log($"new segment start: {newSegmentStart}, New segment end: {newSegmentEnd}");
+
+        LineSegment newSegment = new LineSegment(newSegmentStart, newSegmentEnd);
+
+
+        Vector3 intersectionPoint;
+        if (LineSegmentIntersection.DoesIntersectWithAny(previousSegments.ToArray(), newSegment, out intersectionPoint))
+        {
+            Debug.Log($"new segment intersects with an existing segment at: {intersectionPoint}");
+            
+            return; 
+        }
+
+        previousSegments.Add(newSegment);
+        //Debug.Log($"new segment: {newSegmentStart} to {newSegmentEnd}");
+
+        playerSequence.Add(node);
         points.Add(offsetPos);
 
         lineRenderer.positionCount = points.Count + 1;
@@ -142,6 +160,7 @@ public class NodeConnector : MonoBehaviour
     {
         playerSequence.Clear();
         points.Clear();
+        previousSegments.Clear();
         lineRenderer.positionCount = 0;
     }
 }
