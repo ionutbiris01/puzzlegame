@@ -25,7 +25,7 @@ public class LineSegmentIntersection
                 continue; 
             }
 
-            if (DoIntersect(segment.Start, segment.End, newSegment.Start, newSegment.End, out intersectionPoint))
+            if (Intersects(segment.Start, segment.End, newSegment.Start, newSegment.End, out intersectionPoint))
             {
                 return true; 
             }
@@ -34,31 +34,31 @@ public class LineSegmentIntersection
         return false;
     }
 
-    
-    private static bool DoIntersect(Vector3 p1, Vector3 p2, Vector3 q1, Vector3 q2, out Vector3 intersectionPoint)
+
+    private static bool Intersects(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, out Vector3 intersection)
     {
-        intersectionPoint = Vector3.zero;
+        Vector3 r = p2 - p1;
+        Vector3 s = p4 - p3;
 
-        Vector3 d1 = p2 - p1;
-        Vector3 d2 = q2 - q1;
+        float rxs = Vector3.Cross(r, s).magnitude;
 
-        float denom = Vector3.Cross(d1, d2).magnitude;
-
-        if (denom == 0)
+        if (Mathf.Approximately(rxs, 0))
         {
+            intersection = Vector3.zero;
             return false;
         }
 
-        Vector3 diff = q1 - p1;
-        float t = Vector3.Cross(diff, d2).magnitude / denom;
-        float u = Vector3.Cross(diff, d1).magnitude / denom;
+        Vector3 d = p3 - p1;
+        float t = Vector3.Cross(d, s).magnitude / rxs;
+        float u = Vector3.Cross(d, r).magnitude / rxs;
 
         if (t >= 0 && t <= 1 && u >= 0 && u <= 1)
         {
-            intersectionPoint = p1 + t * d1;
+            intersection = p1 + t * r;
             return true;
         }
 
+        intersection = Vector3.zero;
         return false;
     }
 }
