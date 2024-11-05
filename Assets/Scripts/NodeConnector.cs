@@ -63,13 +63,21 @@ public class NodeConnector : MonoBehaviour
 
     void StartDrawing(Transform node, RaycastHit hit)
     {
-        isDrawing = true;
-        playerSequence.Clear();
-        points.Clear();
-        previousSegments.Clear();
-        lineRenderer.positionCount = 0;
+        if (node == startingNode)
+        {
+            isDrawing = true;
+            playerSequence.Clear();
+            points.Clear();
+            previousSegments.Clear();
+            lineRenderer.positionCount = 0;
 
-        AddPoint(node, hit);
+            AddPoint(node, hit);
+            Debug.Log("Drawing started from the starting node.");
+        }
+        else
+        {
+            Debug.Log("Please start drawing from the starting node.");
+        }
     }
 
     void UpdateLineToMousePosition()
@@ -92,21 +100,15 @@ public class NodeConnector : MonoBehaviour
         Vector3 newSegmentStart = points.Count > 0 ? points[points.Count - 1] : offsetPos;
         Vector3 newSegmentEnd = offsetPos;
 
-        //Debug.Log($"new segment start: {newSegmentStart}, New segment end: {newSegmentEnd}");
-
         LineSegment newSegment = new LineSegment(newSegmentStart, newSegmentEnd);
 
-
-        Vector3 intersectionPoint;
-        if (LineSegmentIntersection.DoesIntersectWithAny(previousSegments.ToArray(), newSegment, out intersectionPoint))
+        if (LineSegmentIntersection.DoesIntersectWithAny(previousSegments.ToArray(), newSegment, out Vector3 intersectionPoint))
         {
-            Debug.Log($"new segment intersects with an existing segment at: {intersectionPoint}");
-            
-            return; 
+            Debug.Log($"New segment intersects with an existing segment at: {intersectionPoint}");
+            return;
         }
 
         previousSegments.Add(newSegment);
-        //Debug.Log($"new segment: {newSegmentStart} to {newSegmentEnd}");
 
         playerSequence.Add(node);
         points.Add(offsetPos);
@@ -117,7 +119,12 @@ public class NodeConnector : MonoBehaviour
 
     void CheckPuzzleCompletion()
     {
-        if (playerSequence.Count > 0 && playerSequence[0] == startingNode && playerSequence[playerSequence.Count - 1] == endingNode)
+        if (playerSequence.Count < 2) 
+        {
+            return;
+        }
+
+        if (playerSequence[0] == startingNode && playerSequence[playerSequence.Count - 1] == endingNode)
         {
             if (IsFullSequenceConnected())
             {
@@ -130,7 +137,7 @@ public class NodeConnector : MonoBehaviour
         }
         else
         {
-            Debug.Log("Connection invalid. Please connect from start to end.");
+            Debug.Log("Please connect from start to end.");
         }
     }
 
